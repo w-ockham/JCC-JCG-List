@@ -5,7 +5,7 @@ import json
 import sqlite3
 import urllib
 
-with open('town-gun.csv') as f:
+with open('town-gun-utf8.csv') as f:
      reader = csv.reader(f)
      town = [row for row in reader]
 
@@ -22,25 +22,26 @@ def lookup_from_town(t):
      
 def main():
      query = 'select * from muni'
-     jcc = ""
-     for (municd,name1,name2,jcc,jcg) in cur.execute(query):
+     for (municd,name1,name2,jcc,_,jcg,_) in cur.execute(query):
           n = name2.split(' ')
           nm = n[0].replace(' ','')
-          (name,jcg) = (lookup_from_town(nm))
+          jcc_text = ''
+          jcc = ''
+          (jcg_text,jcg) = (lookup_from_town(nm))
           if jcg == "":
                query = 'select * from jcc where Name2 = ?'
                cur_jcc.execute(query, (nm, ))
                r = cur_jcc.fetchall()
                if r:
-                    for (code,_,Name2,_) in r:
-                         name = nm
+                    for (code,_,name,_) in r:
+                         jcc_text = name
                          jcc = code
                else:
                     print("Error "+nm)
                     return
-          query = 'update muni set JCCCd = ?, JCGCd = ? where muniCd =  ?'
+          query = 'update muni set JCCCd = ?, JCC_text = ?, JCGCd = ? ,JCG_text = ? where muniCd =  ?'
           try:
-               cur2.execute(query,(jcc,jcg,municd))
+               cur2.execute(query,(jcc, jcc_text, jcg, jcg_text, municd))
                conn.commit()
           except Exception as err:
                print(err)

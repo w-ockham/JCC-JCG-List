@@ -23,35 +23,25 @@ def lookup_muniCode(m):
           cur.execute(query, (m, ))
           r = cur.fetchone()
           if r:
-               (_, pref, city, jcc, jcg) = r
-               jccName = ''
-               jcgName = ''
-               ty = ''
+               (_, pref, city, jcc, jcc_text, jcg, jcg_text) = r
+               ty = 'JCC'
                city = re.sub(r'(.+)\(.+\)',r'\1',city)
-               if jcc != '':
-                    query = 'select * from jcc where JCC = ?'
-                    cur.execute(query, (jcc, ))
-                    (_, _, jccName, _ ) = cur.fetchone()
-                    jccName = re.sub(r'(.+)\(.+\)',r'\1',jccName)
-                    ty = 'JCC'
-               elif jcg != '':
-                    query = 'select * from jcg where JCG = ?'
-                    cur.execute(query, (jcg, ))
-                    (_, _, jcgName, _ ) = cur.fetchone()
-                    city = jcgName + '郡' + city
+               jcc_text = re.sub(r'(.+)\(.+\)',r'\1',jcc_text)
+               if jcg != '':
+                    city = jcg_text + '郡' + city
                     ty = 'JCG'
           else:
-               raise
+               raise Exception
           
           conn.close();
 
           if ty == 'JCC':
                res = { 'pref': pref, 'addr2': city, 'addr1': '','type': ty,
-                       'jcc': jcc, 'jcc_text': jccName,
+                       'jcc': jcc, 'jcc_text': jcc_text
                }
           else:
                res = { 'pref': pref, 'addr2': city, 'addr1': '','type': ty,
-                       'jcg': jcg, 'jcg_text': jcgName
+                       'jcg': jcg, 'jcg_text': jcg_text
                }
 
           return res
