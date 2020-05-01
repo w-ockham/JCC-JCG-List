@@ -9,7 +9,10 @@ import sqlite3
 import sys
 import requests
 
-gsi_endpoint = 'https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress'
+gsi_endpoint = {
+     'revgeocode':'https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress',
+     'elevation':'https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php'
+  }
 
 def lookup_muniCode(m):
      conn = sqlite3.connect('munitable.db')
@@ -57,19 +60,29 @@ def lookup_muniCode(m):
           conn.close()
           return {}
 
-def rev_geocode(lat,lng):
+def rev_geocode(lat,lng,elev):
+     pos = '?lat=' + lat + '&lon=' + lng
+     rev_uri = gsi_endpoint['revgeocode']+ pos 
+     elev_uri = gsi_endpoint['elevation']+ pos + '&outtype=JSON'
      try:
-          r_get = requests.get(gsi_endpoint + '?lat=' + lat + '&lon=' + lng)
+          r_get = requests.get(rev_uri)
           if r_get.status_code == 200:
                res = r_get.json()
                if res:
                     r = lookup_muniCode(str(int(res['results']['muniCd'])))
                     r['addr1'] = res['results']['lv01Nm']
-                    return r
                else:
-                    raise
+                    raise Exception
+               if elev:
+                    r_get = requests.get(elev_uri)
+                    if r_get.status_code == 200:
+                         res = r_get.json()
+                         if res:
+                              r['elevation'] = res['elevation']
+                              r['hsrc'] = res['hsrc']
+               return r
           else:
-               raise
+               raise Exception
      except Exception as err:
           return {'errors':'parameter out of range'}
 
@@ -81,11 +94,16 @@ func = form.getvalue('arg1',None)
 res['errors'] = 'Invalid parameters'
 
 if app == 'reverse-geocoder':
-     if func == 'LonLatToAddress':
+     if 'LonLatToAddress' in func:
+          if func == 'LonLatToAddressElev':
+               elev = True
+          else:
+               elev = False
+               
           if 'lat' in form and 'lon' in form:
                lat = form['lat'].value
                lng = form['lon'].value
-               res = rev_geocode(lat,lng)
+               res = rev_geocode(lat, lng, elev)
                res['errors'] = 'OK'
                
 print('Content-Type:application/json\n\n')
