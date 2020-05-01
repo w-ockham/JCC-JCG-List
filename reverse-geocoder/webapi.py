@@ -28,7 +28,7 @@ def lookup_muniCode(m):
                city = re.sub(r'(.+)\(.+\)',r'\1',city)
                jcc_text = re.sub(r'(.+)\(.+\)',r'\1',jcc_text)
                if jcg != '':
-                    city = jcg_text + '郡' + city
+                    city = jcg_text + city
                     ty = 'JCG'
           else:
                raise Exception

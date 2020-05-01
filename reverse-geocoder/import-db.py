@@ -41,7 +41,7 @@ def main():
                     return
           query = 'update muni set JCCCd = ?, JCC_text = ?, JCGCd = ? ,JCG_text = ? where muniCd =  ?'
           try:
-               cur2.execute(query,(jcc, jcc_text, jcg, jcg_text, municd))
+               cur2.execute(query,(jcc, jcc_text, jcg, jcg_text+'郡', municd))
                conn.commit()
           except Exception as err:
                print(err)
