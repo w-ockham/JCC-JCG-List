@@ -39,9 +39,11 @@ def main():
                else:
                     print("Error "+nm)
                     return
+          else:
+               jcg_text = jcg_text + '郡'
           query = 'update muni set JCCCd = ?, JCC_text = ?, JCGCd = ? ,JCG_text = ? where muniCd =  ?'
           try:
-               cur2.execute(query,(jcc, jcc_text, jcg, jcg_text+'郡', municd))
+               cur2.execute(query,(jcc, jcc_text, jcg, jcg_text , municd))
                conn.commit()
           except Exception as err:
                print(err)
