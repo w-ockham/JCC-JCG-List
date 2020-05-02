@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
+from flask import Flask
+from flask import request
 import cgi
 import csv
 import io
@@ -8,6 +10,8 @@ import re
 import sqlite3
 import sys
 import requests
+
+app = Flask(__name__)
 
 gsi_endpoint = {
      'revgeocode':'https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress',
@@ -51,10 +55,13 @@ def lookup_muniCode(m):
           return {}
 
 def rev_geocode(lat,lng,elev):
-     pos = '?lat=' + lat + '&lon=' + lng
-     rev_uri = gsi_endpoint['revgeocode']+ pos 
-     elev_uri = gsi_endpoint['elevation']+ pos + '&outtype=JSON'
      try:
+          if not lat or not lng:
+               raise Exception
+          pos = '?lat=' + lat + '&lon=' + lng
+          rev_uri = gsi_endpoint['revgeocode']+ pos 
+          elev_uri = gsi_endpoint['elevation']+ pos + '&outtype=JSON'
+
           r_get = requests.get(rev_uri)
           if r_get.status_code == 200:
                res = r_get.json()
@@ -76,26 +83,20 @@ def rev_geocode(lat,lng,elev):
      except Exception as err:
           return {'errors':'parameter out of range'}
 
-res = {'Errors': ''}
-form = cgi.FieldStorage()
-app = form.getvalue('arg0',None)
-func = form.getvalue('arg1',None)
+@app.route("/api/reverse-geocoder/LonLatToAddress")
+def LonLatAddress():
+     lat = request.args.get('lat')
+     lng = request.args.get('lon')
+     res = rev_geocode(lat, lng, False)
+     return(json.dumps(res))
 
-res['errors'] = 'Invalid parameters'
+@app.route("/api/reverse-geocoder/LonLatToAddressElev")
+def LonLatAddressElev():
+     lat = request.args.get('lat')
+     lng = request.args.get('lon')
+     res = rev_geocode(lat, lng, True)
+     return(json.dumps(res))
+            
 
-if app == 'reverse-geocoder':
-     if 'LonLatToAddress' in func:
-          if func == 'LonLatToAddressElev':
-               elev = True
-          else:
-               elev = False
-               
-          if 'lat' in form and 'lon' in form:
-               lat = form['lat'].value
-               lng = form['lon'].value
-               res = rev_geocode(lat, lng, elev)
-               res['errors'] = 'OK'
-               
-print('Content-Type:application/json\n\n')
-print(json.dumps(res))
-
+if __name__ == "__main__":
+     app.run()
